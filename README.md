@@ -50,7 +50,7 @@ Primary evaluation:
 
 Windows from one recording must never be divided across train and test sets. Preprocessing statistics, feature selection, and thresholds must be fitted using the training fold only.
 
-See [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md) for hypotheses, preprocessing, metrics, and required ablations.
+See [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md) for hypotheses, preprocessing, metrics, and required ablations. A Korean version is available at [docs/RESEARCH_PROTOCOL_KO.md](docs/RESEARCH_PROTOCOL_KO.md).
 
 ## Scope and limitations
 
@@ -58,4 +58,3 @@ See [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md) for hypotheses, prepr
 - The dataset supports methodological evaluation of IMU-based simulated-tremor detection, not Parkinson disease, essential tremor, severity scoring, or clinical diagnosis.
 - With only six participants, subject-level uncertainty and per-fold results are more informative than a single random-split accuracy.
 - The original repositories do not currently state a license. Redistribution and downstream use should be confirmed with the source owners before public release.
-
