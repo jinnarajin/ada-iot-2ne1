@@ -32,6 +32,18 @@ python3 scripts/build_manifest.py
 
 The generated `data/manifest.csv` records dataset provenance, subject, label, row count, duration, and timestamp quality for every recording.
 
+## Baseline analysis
+
+Install the pinned dependencies with Python 3.12 and run the leakage-safe recording-level baseline analysis:
+
+```bash
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+MPLCONFIGDIR=/tmp/ada_iot_mpl .venv/bin/python scripts/run_baseline_analysis.py
+```
+
+The initial results and interpretation are documented in [results/INITIAL_ANALYSIS_KO.md](results/INITIAL_ANALYSIS_KO.md).
+
 ## Experimental protocol
 
 The primary comparison is:
