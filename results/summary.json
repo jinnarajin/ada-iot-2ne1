@@ -4,26 +4,26 @@
   "valid_windows": 2614,
   "rejected_windows": 26,
   "loso_mean": {
-    "B0_amplitude": 0.9416666666666668,
-    "B1_time": 0.975,
+    "B0_amplitude": 0.9625,
+    "B1_time": 0.9666666666666667,
     "B2_time_frequency": 0.975
   },
   "loso_std": {
-    "B0_amplitude": 0.09703951085339756,
-    "B1_time": 0.06123724356957947,
+    "B0_amplitude": 0.08023403267940604,
+    "B1_time": 0.08164965809277258,
     "B2_time_frequency": 0.06123724356957947
   },
   "cross_dataset_mean": {
-    "B0_amplitude": 0.9410714285714286,
+    "B0_amplitude": 0.94375,
     "B1_time": 0.9705357142857143,
-    "B2_time_frequency": 0.9839285714285715
+    "B2_time_frequency": 0.9892857142857143
   },
   "cross_dataset_by_direction": {
-    "dataset_a_to_dataset_b:B0_amplitude": 0.925,
+    "dataset_a_to_dataset_b:B0_amplitude": 0.9375,
     "dataset_a_to_dataset_b:B1_time": 0.9625,
-    "dataset_a_to_dataset_b:B2_time_frequency": 0.975,
-    "dataset_b_to_dataset_a:B0_amplitude": 0.9571428571428571,
+    "dataset_a_to_dataset_b:B2_time_frequency": 1.0,
+    "dataset_b_to_dataset_a:B0_amplitude": 0.95,
     "dataset_b_to_dataset_a:B1_time": 0.9785714285714286,
-    "dataset_b_to_dataset_a:B2_time_frequency": 0.9928571428571429
+    "dataset_b_to_dataset_a:B2_time_frequency": 0.9785714285714286
   }
 }

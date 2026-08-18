@@ -73,7 +73,6 @@ def resample_recording(path: Path) -> tuple[np.ndarray, dict[str, np.ndarray], n
         axes = np.column_stack(
             [np.interp(uniform_ms, time_ms, frame[column].to_numpy(float)) for column in columns]
         )
-        axes -= axes.mean(axis=0, keepdims=True)
         signals[sensor] = axes
 
     original_gap_ms = np.diff(time_ms)
@@ -120,6 +119,7 @@ def spectral_features(axes: np.ndarray) -> dict[str, float]:
 
 
 def window_features(axes: np.ndarray) -> dict[str, float]:
+    axes = axes - axes.mean(axis=0, keepdims=True)
     signal = np.linalg.norm(axes, axis=1)
     centered = signal - signal.mean()
     median_value = np.median(signal)

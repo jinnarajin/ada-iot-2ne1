@@ -39,13 +39,13 @@
 
 | 모델 | 평균 balanced accuracy | 표준편차 | 평균 sensitivity | 평균 specificity |
 | --- | ---: | ---: | ---: | ---: |
-| B0 amplitude | 0.9417 | 0.0970 | 0.9167 | 0.9667 |
-| B1 time | 0.9750 | 0.0612 | 0.9500 | 1.0000 |
+| B0 amplitude | 0.9625 | 0.0802 | 0.9333 | 0.9917 |
+| B1 time | 0.9667 | 0.0816 | 0.9333 | 1.0000 |
 | B2 time+frequency | 0.9750 | 0.0612 | 0.9500 | 1.0000 |
 
-B1과 B2는 모든 LOSO fold에서 같은 recording-level 분류 결과를 냈다. 따라서 현재 threshold-based LOSO 결과에서는 주파수 특징이 시간 특징보다 추가 개선을 제공하지 않았다.
+B2는 B1보다 LOSO 평균 balanced accuracy가 0.83 percentage points 높았다. 참가자가 6명뿐이고 개선이 한 참가자의 recording 한 건 차이에 해당하므로 강한 일반화 근거로 해석해서는 안 된다.
 
-가장 어려운 참가자는 `march`였다. B0은 0.75, B1과 B2는 각각 0.85 balanced accuracy였고, 오류는 모두 simulated tremor를 non-tremor로 판단한 false negative였다.
+가장 어려운 참가자는 `march`였다. B0과 B1은 0.80, B2는 0.85 balanced accuracy였고, 오류는 모두 simulated tremor를 non-tremor로 판단한 false negative였다.
 
 ![LOSO balanced accuracy](loso_balanced_accuracy.png)
 
@@ -53,11 +53,11 @@ B1과 B2는 모든 LOSO fold에서 같은 recording-level 분류 결과를 냈�
 
 | 학습 → 평가 | B0 amplitude | B1 time | B2 time+frequency |
 | --- | ---: | ---: | ---: |
-| Dataset A → Dataset B | 0.9250 | 0.9625 | **0.9750** |
-| Dataset B → Dataset A | 0.9571 | 0.9786 | **0.9929** |
-| 두 방향 평균 | 0.9411 | 0.9705 | **0.9839** |
+| Dataset A → Dataset B | 0.9375 | 0.9625 | **1.0000** |
+| Dataset B → Dataset A | 0.9500 | **0.9786** | **0.9786** |
+| 두 방향 평균 | 0.9438 | 0.9705 | **0.9893** |
 
-주파수 특징을 추가한 B2는 B1보다 A→B에서 1.25 percentage points, B→A에서 1.43 percentage points 높았다. 두 방향 평균 개선은 약 1.34 percentage points이다.
+주파수 특징을 추가한 B2는 B1보다 A→B에서 3.75 percentage points 높았고 B→A에서는 같았다. 두 방향 평균 개선은 약 1.88 percentage points이다.
 
 ![Cross-dataset balanced accuracy](cross_dataset_balanced_accuracy.png)
 
@@ -67,8 +67,8 @@ Recording별 윈도우 중앙값을 다시 집계하면 다음과 같다.
 
 | 특징 | Dataset A non-tremor | Dataset A tremor | Dataset B non-tremor | Dataset B tremor |
 | --- | ---: | ---: | ---: | ---: |
-| Acceleration RMS | 0.0092 g | 0.1428 g | 0.0145 g | 0.2393 g |
-| Gyroscope RMS | 1.0102 dps | 23.0781 dps | 1.0982 dps | 23.0824 dps |
+| Acceleration RMS | 0.0077 g | 0.1328 g | 0.0095 g | 0.2243 g |
+| Gyroscope RMS | 0.9955 dps | 22.8449 dps | 1.0893 dps | 22.9119 dps |
 | Acceleration dominant frequency | 4.17 Hz | 9.33 Hz | 5.00 Hz | 6.67 Hz |
 | Gyroscope dominant frequency | 4.67 Hz | 9.33 Hz | 3.42 Hz | 6.42 Hz |
 
@@ -80,11 +80,11 @@ Recording별 윈도우 중앙값을 다시 집계하면 다음과 같다.
 
 현재 결과는 연구 가설을 **부분적으로 지지**한다.
 
-- **Subject-independent:** 주파수 정보는 time-only 모델의 hard classification 결과를 개선하지 않았다.
-- **Cross-dataset:** 주파수 정보는 두 학습 방향 모두에서 time-only 모델보다 높은 balanced accuracy를 기록했다.
+- **Subject-independent:** 주파수 정보는 time-only 모델보다 평균 0.83 percentage points 높았지만 한 참가자의 recording 한 건 차이에 불과했다.
+- **Cross-dataset:** 주파수 정보는 A→B에서 개선됐고 B→A에서는 같은 balanced accuracy를 기록했다.
 - **해석:** 명시적 주파수 정보는 새로운 사람보다 새로운 수집 조건으로의 일반화에서 더 유용할 가능성이 있다.
 
-다만 참가자가 6명뿐이고 진폭만으로도 거의 분리되므로, 약 1.3 percentage points의 개선을 일반적 효과로 주장하기에는 근거가 부족하다. 이 결과는 탐색적 1차 결과로 취급해야 한다.
+다만 참가자가 6명뿐이고 진폭만으로도 거의 분리되므로, 작은 개선을 일반적 효과로 주장하기에는 근거가 부족하다. 이 결과는 탐색적 1차 결과로 취급해야 한다.
 
 ## 다음 분석
 
