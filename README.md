@@ -42,7 +42,7 @@ python3.12 -m venv .venv
 MPLCONFIGDIR=/tmp/ada_iot_mpl .venv/bin/python scripts/run_baseline_analysis.py
 ```
 
-The initial results and interpretation are documented in [results/INITIAL_ANALYSIS_KO.md](results/INITIAL_ANALYSIS_KO.md). Sensor and window-length ablations are reported in [results/SENSITIVITY_ANALYSIS_KO.md](results/SENSITIVITY_ANALYSIS_KO.md).
+The initial results and interpretation are documented in [results/INITIAL_ANALYSIS_KO.md](results/INITIAL_ANALYSIS_KO.md). Sensor and window-length ablations are reported in [results/SENSITIVITY_ANALYSIS_KO.md](results/SENSITIVITY_ANALYSIS_KO.md). Fixed RBF-SVM and Random Forest baselines are reported in [results/NONLINEAR_BASELINES_KO.md](results/NONLINEAR_BASELINES_KO.md).
 
 ## Experimental protocol
 
