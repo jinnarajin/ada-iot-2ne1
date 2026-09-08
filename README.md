@@ -6,7 +6,8 @@
 
 This repository studies binary detection of **simulated tremor versus non-tremor motion in healthy participants**. It does not contain measurements from patients and must not be presented as a clinical diagnosis dataset.
 
-The development plan from data collection through on-device Apple Watch inference is
+The two-track development plan—from Apple Watch integration to a fallback custom IMU
+wearable with a 3D-printed enclosure—is
 documented in [docs/APPLE_WATCH_ROADMAP_KO.md](docs/APPLE_WATCH_ROADMAP_KO.md).
 
 ## Data
