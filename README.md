@@ -6,6 +6,9 @@
 
 This repository studies binary detection of **simulated tremor versus non-tremor motion in healthy participants**. It does not contain measurements from patients and must not be presented as a clinical diagnosis dataset.
 
+The development plan from data collection through on-device Apple Watch inference is
+documented in [docs/APPLE_WATCH_ROADMAP_KO.md](docs/APPLE_WATCH_ROADMAP_KO.md).
+
 ## Data
 
 The repository combines two independently collected datasets while preserving their provenance:
