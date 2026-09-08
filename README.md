@@ -44,6 +44,26 @@ MPLCONFIGDIR=/tmp/ada_iot_mpl .venv/bin/python scripts/run_baseline_analysis.py
 
 The initial results and interpretation are documented in [results/INITIAL_ANALYSIS_KO.md](results/INITIAL_ANALYSIS_KO.md). Sensor and window-length ablations are reported in [results/SENSITIVITY_ANALYSIS_KO.md](results/SENSITIVITY_ANALYSIS_KO.md). Fixed RBF-SVM and Random Forest baselines are reported in [results/NONLINEAR_BASELINES_KO.md](results/NONLINEAR_BASELINES_KO.md).
 
+## Train and score a recording
+
+After generating `results/recording_features.csv`, fit the selected Random Forest B2
+baseline on all available recordings and score one or more new CSV files:
+
+```bash
+.venv/bin/python scripts/tremor_classifier.py train
+.venv/bin/python scripts/tremor_classifier.py predict path/to/new_imu.csv
+```
+
+The command prints `simulated_tremor` or `non_tremor` and the simulated-tremor
+probability. Input CSVs need at least 3 seconds of data and the seven timestamp,
+accelerometer, and gyroscope columns documented above. A duration close to the
+approximately 20-second training recordings is preferable because the model aggregates
+3-second windows at recording level.
+
+The resulting `models/tremor_rf_b2.pkl` is a local Python pickle; load only an artifact
+you created or otherwise trust. This model detects the dataset's voluntarily simulated
+tremor and is not a clinical diagnostic model.
+
 ## Experimental protocol
 
 The primary comparison is:
