@@ -10,6 +10,12 @@ The two-track development plan—from Apple Watch integration to a fallback cust
 wearable with a 3D-printed enclosure—is
 documented in [docs/APPLE_WATCH_ROADMAP_KO.md](docs/APPLE_WATCH_ROADMAP_KO.md).
 
+The team assignments due September 15, 2026 are documented in
+[docs/WEEKLY_TASKS_2026-09-15_KO.md](docs/WEEKLY_TASKS_2026-09-15_KO.md).
+
+The current team assignments due September 15, 2026 are documented in
+[docs/WEEKLY_TASKS_2026-09-15_KO.md](docs/WEEKLY_TASKS_2026-09-15_KO.md).
+
 ## Data
 
 The repository combines two independently collected datasets while preserving their provenance:
