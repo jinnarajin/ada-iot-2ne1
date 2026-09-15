@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate fixed RBF-SVM and Random Forest nonlinear baselines."""
+"""Evaluate fixed RBF-SVM, Random Forest, and AdaBoost nonlinear baselines."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results"
 FEATURES = RESULTS / "recording_features_3s.csv"
 FEATURE_SETS = ("B1_time", "B2_time_frequency")
-CLASSIFIERS = ("RBF_SVM", "Random_Forest")
+CLASSIFIERS = ("RBF_SVM", "Random_Forest", "AdaBoost")
 
 
 def build_classifier(name: str):
@@ -49,6 +49,16 @@ def build_classifier(name: str):
                 class_weight="balanced",
                 random_state=42,
                 n_jobs=-1,
+            ),
+        )
+
+    if name == "AdaBoost":
+        return make_pipeline(
+            StandardScaler(),
+            AdaBoostClassifier(
+                n_estimators=200,
+                learning_rate=0.5,
+                random_state=42,
             ),
         )
     raise ValueError(f"Unknown classifier: {name}")
@@ -156,7 +166,7 @@ def plot_metrics(metrics: pd.DataFrame) -> None:
 
     plt.style.use("seaborn-v0_8-whitegrid")
     fig, axes = plt.subplots(1, 2, figsize=(13, 5.5), sharey=True)
-    classifiers = ("Logistic_Regression", "RBF_SVM", "Random_Forest")
+    classifiers = ("Logistic_Regression", "RBF_SVM", "Random_Forest", "AdaBoost")
     width = 0.36
     for axis, evaluation, title in zip(
         axes,
@@ -173,7 +183,7 @@ def plot_metrics(metrics: pd.DataFrame) -> None:
                 for classifier in classifiers
             ]
             axis.bar(x + offset, values, width=width, label=feature_set)
-        axis.set_xticks(x, ["Logistic", "RBF-SVM", "Random Forest"])
+        axis.set_xticks(x, ["Logistic", "RBF-SVM", "Random Forest", "AdaBoost"])
         axis.set_ylim(0.75, 1.005)
         axis.set_title(title)
         axis.set_ylabel("Balanced accuracy")
