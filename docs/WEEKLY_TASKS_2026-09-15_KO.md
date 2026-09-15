@@ -94,7 +94,31 @@ data_sources/<name>/<dataset_name>/
 
 | 팀원 | 분류 모델 | 오픈소스 데이터셋 | 상태 |
 | --- | --- | --- | --- |
-| seojin | 배정 필요 | [PADS - Parkinsons Disease Smartwatch dataset](../data_sources/seojin/pads/README.md) | 데이터셋 조사 완료 |
+| seojin | [k-Nearest Neighbors](../experiments/seojin/knn/README.md) | [PADS - Parkinsons Disease Smartwatch dataset](../data_sources/seojin/pads/README.md) | 분류기 완료, PADS 변환 코드 완료 |
+
+### seojin 진행 내역 (2026-09-15)
+
+- 과제 1: k-NN (k=5, distance weighting, B2 특징, 3초/50 Hz). LOSO 평균 balanced
+  accuracy 0.950 (RF 0.992), cross-dataset 평균 0.976 (RF 0.990). 오분류는 전부 march의
+  저진폭 simulated tremor. 실행법·fold별 결과·해석은
+  [experiments/seojin/knn/README.md](../experiments/seojin/knn/README.md).
+- 과제 2: PADS 조사 완료, 다운로드·변환·학습 완료. `data_sources/seojin/pads/sync_s3.py`가
+  aws CLI 없이 S3 미러에서 `patients/`·`movement/`를 병렬로 내려받고(469명, 10,318
+  recording, 1.2 GB), `scripts/prepare_pads.py`가 TXT를 공통 CSV schema로 변환한다
+  (100 Hz, 첫 0.5초 vibration cue 제거, gyro rad/s→deg/s). 라벨 규칙: `Healthy` →
+  non_tremor(79명), `Essential Tremor` 또는 `disease_comment`에 tremor/mixed type 언급 →
+  tremor(193명), 나머지 무진전형 PD·근긴장이상·MS 등 197명은 떨림 근거가 없어 제외.
+  결과는 `data/pads_manifest.csv`, `results/pads_recording_features.csv`(272명, 5,984
+  recording). 변환된 CSV와 raw는 `.gitignore`로 제외된다.
+- 과제 2 결과: 기존 RF B2 분류기를 PADS로 학습. 5-fold GroupKFold(subject-independent)
+  recording AUC 0.79, balanced accuracy 0.72(임계값 0.68, 중첩 CV로 선택), subject 단위
+  AUC 0.91 / balanced accuracy 0.79. 자체 dataset_a/b에 적용 시 balanced accuracy 0.87.
+  task별로는 StretchHold·CrossArms 등 정적 과제가 0.85 이상, Entrainment 0.63으로
+  kinetic 과제에서 healthy 동작을 tremor로 오탐하는 것이 주요 오류. 임계값은
+  `tremor_classifier.py train --threshold`로 모델 아티팩트에 저장되며 `predict`가 사용한다.
+- 추가로 팀원이 나눠 맡을 후보 6개를
+  [data_sources/seojin/CANDIDATE_DATASETS_KO.md](../data_sources/seojin/CANDIDATE_DATASETS_KO.md)에
+  정리했다. 추천: Levodopa Response Study(Synapse), Monipar(Zenodo, CC-BY, 35 MB).
 
 ## 완료 기준
 

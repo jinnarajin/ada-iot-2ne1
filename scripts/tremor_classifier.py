@@ -26,7 +26,7 @@ REQUIRED_COLUMNS = {
 }
 
 
-def train(features_path: Path, model_path: Path) -> None:
+def train(features_path: Path, model_path: Path, threshold: float = 0.5) -> None:
     frame = pd.read_csv(features_path)
     columns = feature_columns(frame, "B2_time_frequency")
     if not columns:
@@ -47,13 +47,14 @@ def train(features_path: Path, model_path: Path) -> None:
         "sampling_rate_hz": 50.0,
         "window_seconds": 3.0,
         "positive_class": "simulated_tremor",
+        "threshold": threshold,
         "training_recordings": len(frame),
         "training_subjects": int(frame["subject_id"].nunique()),
     }
     model_path.parent.mkdir(parents=True, exist_ok=True)
     with model_path.open("wb") as file:
         pickle.dump(artifact, file)
-    print(f"Saved model: {model_path}")
+    print(f"Saved model: {model_path} (threshold={threshold})")
     print(f"Training data: {len(frame)} recordings, {artifact['training_subjects']} subjects")
 
 
@@ -91,13 +92,14 @@ def predict(model_path: Path, csv_paths: list[Path]) -> None:
 
     columns = artifact["feature_columns"]
     model = artifact["model"]
+    threshold = artifact.get("threshold", 0.5)
     for path in csv_paths:
         features = extract_new_recording(path)
         missing = sorted(set(columns) - set(features.columns))
         if missing:
             raise ValueError(f"Model/input feature mismatch: {', '.join(missing)}")
         probability = float(model.predict_proba(features[columns])[0, 1])
-        label = "simulated_tremor" if probability >= 0.5 else "non_tremor"
+        label = "simulated_tremor" if probability >= threshold else "non_tremor"
         print(f"{path}\t{label}\tprobability={probability:.4f}")
 
 
@@ -110,6 +112,7 @@ def parse_args() -> argparse.Namespace:
     train_parser = subparsers.add_parser("train", help="fit and save the classifier")
     train_parser.add_argument("--features", type=Path, default=DEFAULT_FEATURES)
     train_parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
+    train_parser.add_argument("--threshold", type=float, default=0.5, help="decision threshold stored with the model")
 
     predict_parser = subparsers.add_parser("predict", help="score one or more IMU CSVs")
     predict_parser.add_argument("csv", type=Path, nargs="+")
@@ -120,7 +123,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     if args.command == "train":
-        train(args.features, args.model)
+        train(args.features, args.model, args.threshold)
     else:
         predict(args.model, args.csv)
 

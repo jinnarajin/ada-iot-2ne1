@@ -97,6 +97,22 @@ PADS 변환 규칙:
 | task name + wrist | manifest의 `recording_id`, `activity`, `device_location` |
 | patient condition | manifest의 `source_label` 및 파생 `label_candidate` |
 
+구현: `sync_s3.py`(S3 미러 병렬 다운로드, aws CLI 불필요)와 `scripts/prepare_pads.py`.
+로컬 raw 경로는 `PADS_RAW` 환경변수로 바꿀 수 있다.
+
+```bash
+PADS_RAW=/path/to/pads/raw python3 data_sources/seojin/pads/sync_s3.py
+.venv/bin/python scripts/prepare_pads.py
+.venv/bin/python scripts/tremor_classifier.py train --features results/pads_recording_features.csv --model models/tremor_rf_pads.pkl --threshold 0.68
+```
+
+`data/pads_manifest.csv`와 `results/pads_recording_features.csv`를 생성한다.
+
+확정 라벨 규칙: `Healthy` → non_tremor, `Essential Tremor` 또는 `disease_comment`에
+tremor/mixed type 언급 → tremor, 나머지(무진전형 PD, 근긴장이상, MS 등)는 제외.
+"Healthy 외 전부 tremor"로 두면 떨림 없는 환자가 tremor로 들어가 어떤 모델도
+non_tremor 경계를 배우지 못한다.
+
 100 Hz 원본은 우리 baseline pipeline에서 50 Hz로 리샘플링한다. 첫 0.5초는 Watch
 vibration 알림 영향이 있을 수 있으므로 분석에서 제거하는 옵션을 둔다.
 
