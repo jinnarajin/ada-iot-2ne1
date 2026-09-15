@@ -78,7 +78,7 @@ under `experiments/<name>/` and `data_sources/<name>/`.
 
 | Member | Classifier | Open dataset |
 | --- | --- | --- |
-| euno | [Gradient Boosting](experiments/euno/gradient_boosting/README.md) | [PADS](data_sources/euno/pads/README.md) |
+| euno | [Gradient Boosting](experiments/euno/gradient_boosting/README.md) ([PADS-only run](experiments/euno/gradient_boosting_pads/README.md)) | [PADS](data_sources/euno/pads/README.md) |
 
 Converted third-party data is written to the git-ignored `data/processed/` directory
 and is never committed.

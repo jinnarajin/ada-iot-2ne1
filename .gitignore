@@ -9,3 +9,6 @@ data_sources/**/raw/
 data_sources/**/prepared/
 experiments/hmuzn/hist_gradient_boosting/pads_results/recording_features.csv
 experiments/hmuzn/hist_gradient_boosting/pads_results/predictions.csv
+
+# PADS 파생물 (CC BY-NC-SA). 준비 스크립트로 재생성한다.
+results/pads_recording_features_*.csv
