@@ -40,17 +40,14 @@ MPLCONFIGDIR=/tmp/ada_iot_mpl .venv/bin/python \
 ```
 
 PADS 라벨은 recording/window에서 직접 관찰한 떨림 정답이 아니라 참가자 진단에서
-도출한 weak label이다. 따라서 참가자를 train/test에 섞지 않는
-`StratifiedGroupKFold`를 사용하며, 결과를 임상적 순간 떨림 탐지 성능으로 해석하지
-않는다. 최종 모델은 `models/hgb_pads_pilot.pkl`에 생성되며 git에는 커밋되지 않는다.
+도출한 weak label이다. 따라서 참가자를 train/test에 섞지 않고 두 라벨의 참가자를
+각 fold에 균등 배분하는 5-fold 평가를 사용하며, 결과를 임상적 순간 떨림 탐지
+성능으로 해석하지 않는다. 최종 모델은 `models/hgb_pads_strict.pkl`에 생성되며
+git에는 커밋되지 않는다.
 
-현재 파일럿은 4명(weak-label tremor 2명, healthy 2명)의 40개 recording으로
-실행했다. 참가자 중복이 없는 2-fold 평균은 balanced accuracy **0.9500**,
-sensitivity **0.9000**, specificity **1.0000**, macro F1 **0.9495**, AUROC
-**0.9500**이다. `pads_009`의 오른손 `Relaxed`와 `RelaxedTask` 두 recording을
-false negative로 분류했다. 표본이 4명뿐이므로 이 수치는 파이프라인 작동을 확인한
-파일럿 결과이며 일반화 성능으로 제시할 수 없다. 전체 strict 코호트 160명 결과는
-공식 서버에서 나머지 데이터를 받은 뒤 같은 명령으로 다시 생성해야 한다.
+전체 strict 코호트는 160명(weak-label tremor 81명, healthy 79명), 1,600개
+recording으로 구성된다. 5-fold 평가 결과와 해석은 `pads_results/summary.json`과
+`pads_results/fold_metrics.csv`에 기록한다.
 모델 hyperparameter는 고정했으며 test fold로 조정하지 않았다. 참가자가 6명뿐이고
 모두 건강한 참가자의 모사 떨림이므로 임상적 tremor 탐지 성능으로 해석할 수 없다.
 또한 recording 단위 집계는 떨림이 간헐적으로 나타나는 시점을 숨길 수 있다.

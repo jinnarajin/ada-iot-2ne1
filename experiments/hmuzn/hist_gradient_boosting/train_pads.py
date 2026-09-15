@@ -17,7 +17,6 @@ from sklearn.metrics import (
     f1_score,
     roc_auc_score,
 )
-from sklearn.model_selection import StratifiedGroupKFold
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
@@ -74,12 +73,22 @@ def main() -> None:
     if n_splits < 2:
         raise SystemExit("Need at least two tremor and two control participants")
 
-    splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
+    # Split subjects—not recordings—within each class, then combine one chunk
+    # from each class per fold. This guarantees both participant isolation and
+    # approximately equal class counts in every test fold.
+    rng = np.random.default_rng(42)
+    subject_folds: list[list[str]] = [[] for _ in range(n_splits)]
+    for label in (0, 1):
+        label_subjects = subject_labels[subject_labels == label].index.to_numpy(copy=True)
+        rng.shuffle(label_subjects)
+        for fold, chunk in enumerate(np.array_split(label_subjects, n_splits)):
+            subject_folds[fold].extend(chunk.tolist())
     metrics: list[dict[str, object]] = []
     predictions: list[dict[str, object]] = []
-    for fold, (train_index, test_index) in enumerate(
-        splitter.split(features[columns], target, groups), start=1
-    ):
+    for fold, test_subjects_for_fold in enumerate(subject_folds, start=1):
+        test_mask = np.isin(groups, test_subjects_for_fold)
+        test_index = np.flatnonzero(test_mask)
+        train_index = np.flatnonzero(~test_mask)
         model = make_model()
         model.fit(features.iloc[train_index][columns], target[train_index])
         probability = model.predict_proba(features.iloc[test_index][columns])[:, 1]
@@ -101,7 +110,7 @@ def main() -> None:
 
     final_model = make_model()
     final_model.fit(features[columns], target)
-    model_path = ROOT / "models/hgb_pads_pilot.pkl"
+    model_path = ROOT / "models/hgb_pads_strict.pkl"
     model_path.parent.mkdir(exist_ok=True)
     joblib.dump({
         "model": final_model,
@@ -114,7 +123,7 @@ def main() -> None:
     }, model_path)
 
     summary = {
-        "dataset": "PADS strict pilot",
+        "dataset": "PADS strict cohort",
         "n_subjects": int(features["subject_id"].nunique()),
         "n_recordings": int(len(features)),
         "n_splits": n_splits,
