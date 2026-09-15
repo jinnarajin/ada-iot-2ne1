@@ -7,3 +7,6 @@ __pycache__/
 models/*.pkl
 data_sources/**/raw/
 data_sources/**/prepared/
+data/pads_manifest.csv
+results/pads_recording_features.csv
+experiments/**/predictions.csv
