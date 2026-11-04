@@ -1,0 +1,185 @@
+<title>PADS Tremor Attention</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 좌측 피험자 목록(필터·정렬), 우측 = 과제 11행 x 손목 2열 소형 패널 그리드 + 선택 녹음 확대. */
+:root{
+  --bg:#f6f5f2; --panel:#ffffff; --fg:#1d1c1a; --muted:#6d6a63; --line:#dedbd4;
+  --accent:#c8321f; --tremor:#9a1d0f; --non:#1f4b8c; --spec-lo:#f6f5f2; --spec-hi:#2a2825;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171614; --panel:#201f1c; --fg:#ece9e2; --muted:#9a968d; --line:#35332e;
+  --accent:#ff5a3c; --tremor:#ff7a62; --non:#7fb0ff; --spec-lo:#201f1c; --spec-hi:#e8e4dc; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171614; --panel:#201f1c; --fg:#ece9e2; --muted:#9a968d; --line:#35332e;
+  --accent:#ff5a3c; --tremor:#ff7a62; --non:#7fb0ff; --spec-lo:#201f1c; --spec-hi:#e8e4dc; color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--sans);
+  padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+h1{font-size:18px;font-weight:600;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 14px;max-width:72ch}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px}
+@media(max-width:800px){.app{grid-template-columns:1fr}}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ctl select,.ctl button{font:500 13px var(--sans);padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.ctl button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.ctl :focus-visible,.list button:focus-visible,.grid button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stat{font:12px var(--mono);color:var(--muted)}
+.list{display:flex;flex-direction:column;max-height:62vh;overflow-y:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+@media(max-width:800px){.list{max-height:28vh}}
+.list button{display:grid;grid-template-columns:34px 58px 1fr 44px;align-items:center;gap:8px;text-align:left;padding:6px 10px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--fg);font:13px var(--sans);cursor:pointer}
+.list button:last-child{border-bottom:0}
+.list button[aria-pressed="true"]{background:var(--bg)}
+.id{font:12px var(--mono);color:var(--muted)}
+.lab{font:500 10px var(--sans);letter-spacing:.04em;text-transform:uppercase;padding:2px 5px;border-radius:3px;color:var(--bg);text-align:center}
+.lab.t{background:var(--tremor)} .lab.n{background:var(--non)}
+.p{font:12px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.p.wrong{color:var(--accent);font-weight:500}
+.bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.main{min-width:0;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
+.head{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;font:12px var(--mono);color:var(--muted)}
+.head b{color:var(--fg);font-weight:500}
+.grid{display:grid;grid-template-columns:90px 1fr 1fr 48px;gap:4px 8px;align-items:center}
+.grid .h{font:500 11px var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.grid .task{font:12px var(--sans);text-align:right}
+.grid .share{font:11px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.grid button{padding:0;border:1px solid var(--line);border-radius:3px;background:var(--panel);cursor:pointer;display:block;line-height:0;min-width:0}
+.grid button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.grid canvas{width:100%;height:34px;display:block}
+canvas.big{width:100%;height:auto;display:block;max-width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font:12px var(--sans);color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:-2px}
+.legend .a::before{background:var(--accent);opacity:.5} .legend .b::before{background:var(--spec-hi)} .legend .c::before{background:#f0a500}
+</style>
+
+<h1>PADS Tremor Attention</h1>
+<p class="sub">PADS 실제 환자 데이터. 피험자 1명(11개 과제 × 양손목 = 녹음 22개)이 bag이고 2초 윈도우가 instance입니다. ABMIL은 "이 사람이 떨림 환자인가" 라벨만 보고 학습했고, 붉은 농도는 모델이 어느 과제·어느 구간을 근거로 삼았는지입니다. 5-fold 피험자 분할의 out-of-fold 예측입니다.</p>
+
+<div class="app">
+  <div class="side">
+    <div class="ctl">
+      <select id="filter" aria-label="필터"><option value="all">전체</option><option value="t">떨림만</option><option value="n">건강군만</option><option value="wrong">오분류만</option></select>
+      <select id="sort" aria-label="정렬"><option value="id">ID 순</option><option value="p">확률 높은 순</option><option value="att">attention 집중 순</option></select>
+      <select id="tasks" aria-label="과제 그룹"><option value="all">모든 과제</option><option value="kin">운동성만</option><option value="rest">안정만</option><option value="post">자세만</option></select>
+    </div>
+    <div class="stat" id="stat"></div>
+    <div class="list" id="list"></div>
+  </div>
+  <div class="main">
+    <div class="card">
+      <div class="head" id="head"></div>
+      <div class="grid" id="grid" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="head" id="head2"></div>
+      <canvas class="big" id="big" width="1200" height="420"></canvas>
+      <div class="legend"><span class="a">attention (bag 평균 수준이면 투명, 평균의 6배 이상이면 최대)</span><span class="b">스펙트로그램 파워</span><span class="c">3~12 Hz 떨림 대역 · 흰 점 = 윈도우 피크 Hz · 숫자 = 3~12 Hz 파워 / 0.5~15 Hz 파워 (0.6 이상 주황)</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let D, cur = 0, curRec = 0, order = [];
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const TASKS = ["Relaxed","RelaxedTask","StretchHold","HoldWeight","LiftHold","CrossArms","DrinkGlas","PointFinger","TouchNose","TouchIndex","Entrainment"];
+const GROUPS = {all: TASKS, kin: ["DrinkGlas","PointFinger","TouchNose","TouchIndex"], rest: ["Relaxed","RelaxedTask"], post: ["StretchHold","HoldWeight","LiftHold","CrossArms"]};
+const TASK_KO = {Relaxed:"안정", RelaxedTask:"안정(과제)", StretchHold:"팔 뻗기", HoldWeight:"무게 들기", LiftHold:"들어 유지", CrossArms:"팔짱", DrinkGlas:"컵 마시기", PointFinger:"손가락 가리키기", TouchNose:"코 짚기", TouchIndex:"검지 맞대기", Entrainment:"발 구르기"};
+
+fetch("data.json").then(r => r.json()).then(d => {
+  D = d;
+  D.subjects.forEach(s => { const K = s.recs.reduce((a,r)=>a+r.att.length,0); s.attMax = Math.max(...s.recs.flatMap(r=>r.att)) * K; });
+  $("filter").onchange = $("sort").onchange = () => renderList(true);
+  $("tasks").onchange = () => { curRec = -1; renderSubject(); };
+  renderList(true);
+});
+
+function renderList(reset){
+  const f = $("filter").value, so = $("sort").value;
+  order = D.subjects.map((s,i)=>i).filter(i => { const s = D.subjects[i];
+    return f==="all" || (f==="t"&&s.y===1) || (f==="n"&&s.y===0) || (f==="wrong"&&(s.p>0.5)!==(s.y===1)); });
+  if (so==="p") order.sort((a,b)=>D.subjects[b].p-D.subjects[a].p);
+  if (so==="att") order.sort((a,b)=>D.subjects[b].attMax-D.subjects[a].attMax);
+  const all = D.subjects, tp = all.filter(s=>s.y&&s.p>.5).length, tn = all.filter(s=>!s.y&&s.p<=.5).length, n1 = all.filter(s=>s.y).length, n0 = all.length-n1;
+  $("stat").textContent = `${all.length}명 · tremor ${tp}/${n1} · healthy ${tn}/${n0} · bal.acc ${(0.5*(tp/n1+tn/n0)).toFixed(3)} · 표시 ${order.length}명`;
+  if (reset && order.length && !order.includes(cur)) cur = order[0];
+  $("list").innerHTML = order.map(i => { const s = D.subjects[i]; return `<button aria-pressed="${i===cur}" data-i="${i}">
+    <span class="id">${s.id}</span><span class="lab ${s.y?'t':'n'}">${s.y?'tremor':'healthy'}</span>
+    <span class="bar"><i style="width:${s.p*100}%"></i></span><span class="p ${(s.p>.5)!==(s.y===1)?'wrong':''}">${s.p.toFixed(2)}</span></button>`; }).join("");
+  $("list").onclick = e => { const b = e.target.closest("button"); if (b) { cur = +b.dataset.i; curRec = 0; renderList(false); } };
+  if (order.length) renderSubject();
+}
+
+function shade(a, K){ return Math.min(1, Math.max(0, (a*K - 1) / 5)); }   // 1/K(균등)=0, 6/K=1
+
+function renderSubject(){
+  const s = D.subjects[cur], K = s.recs.reduce((a,r)=>a+r.att.length,0);
+  const best = s.recs.reduce((b,r,i)=>Math.max(...r.att)>Math.max(...s.recs[b].att)?i:b,0);
+  $("head").innerHTML = `<span>subject <b>${s.id}</b></span><span>진단 <b>${s.cond}</b></span><span>label <b>${s.y?'TREMOR':'HEALTHY'}</b></span><span>p(tremor) <b>${s.p.toFixed(3)}</b></span><span>attention 최대 녹음 <b>${s.recs[best].name}</b></span>`;
+  const byName = Object.fromEntries(s.recs.map((r,i)=>[r.name,i]));
+  const shown = GROUPS[$("tasks").value];
+  if (curRec < 0 || !shown.includes(s.recs[curRec].name.split("/")[0])) curRec = byName[`${shown[0]}/L`] ?? 0;
+  let h = `<span class="h"></span><span class="h">Left wrist</span><span class="h">Right wrist</span><span class="h">att</span>`;
+  shown.forEach(t => {
+    h += `<span class="task">${TASK_KO[t]}<br><span class="id">${t}</span></span>`;
+    let sum = 0;
+    ["L","R"].forEach(w => { const i = byName[`${t}/${w}`]; if (i===undefined) { h += `<span></span>`; return; }
+      sum += s.recs[i].att.reduce((a,b)=>a+b,0);
+      h += `<button aria-pressed="${i===curRec}" data-r="${i}" title="${t} ${w}"><canvas width="400" height="40" data-r="${i}"></canvas></button>`; });
+    h += `<span class="share">${(sum*100).toFixed(0)}%</span>`;
+  });
+  $("grid").innerHTML = h;
+  $("grid").querySelectorAll("canvas").forEach(c => drawMini(c, s.recs[+c.dataset.r], K));
+  $("grid").onclick = e => { const b = e.target.closest("button"); if (b) { curRec = +b.dataset.r; $("grid").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", +x.dataset.r===curRec)); drawBig(); } };
+  drawBig();
+}
+
+function drawMini(cv, r, K){
+  const c = cv.getContext("2d"), W = cv.width, H = cv.height, n = r.mag.length, hop = D.hop/D.fs, win = D.win/D.fs;
+  const dur = (r.att.length-1)*hop + win, x = t => t/dur*W;
+  c.fillStyle = css("--panel"); c.fillRect(0,0,W,H);
+  r.att.forEach((a,k) => { const sh = shade(a,K); if (sh<=0) return; c.globalAlpha = sh*0.55; c.fillStyle = css("--accent"); c.fillRect(x(k*hop),0,x(win),H); });
+  c.globalAlpha = 1; c.strokeStyle = css("--fg"); c.lineWidth = 1; c.beginPath();
+  r.mag.forEach((v,i) => { const px = i/(n-1)*W, py = H - Math.min(v,8)/8*H; i ? c.lineTo(px,py) : c.moveTo(px,py); });
+  c.stroke();
+}
+
+function drawBig(){
+  const s = D.subjects[cur], r = s.recs[curRec], K = s.recs.reduce((a,q)=>a+q.att.length,0);
+  const fs = D.fs, win = D.win, hop = D.hop, nk = r.att.length, dur = ((nk-1)*hop + win)/fs;
+  const amax = Math.max(...r.att), [t, w] = r.name.split("/");
+  $("head2").innerHTML = `<span>녹음 <b>${TASK_KO[t]} (${t}) · ${w==="L"?"왼손목":"오른손목"}</b></span><span>길이 <b>${dur.toFixed(1)} s</b></span><span>이 녹음의 attention 합 <b>${(r.att.reduce((a,b)=>a+b,0)*100).toFixed(1)}%</b></span><span>최대 윈도우 <b>${(amax*K).toFixed(1)}× 균등</b> at ${(r.att.indexOf(amax)*hop/fs).toFixed(0)}–${(r.att.indexOf(amax)*hop/fs+2).toFixed(0)} s</span>`;
+  const cv = $("big"), c = cv.getContext("2d"), W = cv.width, H = cv.height;
+  const L = 48, R = 12, top = 10, gap = 24, h1 = 200, h2 = H - top - h1 - gap - 28, x = tt => L + tt/dur*(W-L-R);
+  c.fillStyle = css("--panel"); c.fillRect(0,0,W,H);
+  const accent = css("--accent");
+  const paint = (y0,h,mul) => r.att.forEach((a,k) => { const sh = shade(a,K); if (sh<=0) return; c.globalAlpha = sh*mul; c.fillStyle = accent; c.fillRect(x(k*hop/fs), y0, x((k*hop+win)/fs)-x(k*hop/fs), h); });
+  paint(top,h1,0.5); c.globalAlpha = 1;
+  const ymax = 8, y1 = v => top + h1 - Math.min(v,ymax)/ymax*h1;
+  c.strokeStyle = css("--line"); c.lineWidth = 1; [0,2,4,6,8].forEach(v => { c.beginPath(); c.moveTo(L,y1(v)); c.lineTo(W-R,y1(v)); c.stroke(); });
+  c.fillStyle = css("--muted"); c.font = "11px "+css("--mono"); c.textAlign = "right"; [0,4,8].forEach(v => c.fillText(v, L-6, y1(v)+4));
+  c.save(); c.translate(12, top+h1/2); c.rotate(-Math.PI/2); c.textAlign="center"; c.fillText("|acc| z",0,0); c.restore();
+  c.strokeStyle = css("--fg"); c.lineWidth = 1.1; c.beginPath();
+  const n = r.mag.length; r.mag.forEach((v,i) => { const px = x(i/(n-1)*dur); i ? c.lineTo(px,y1(v)) : c.moveTo(px,y1(v)); }); c.stroke();
+  const f = D.freqs, t2 = top+h1+gap, y2 = hz => t2 + h2 - hz/15*h2;
+  let lo = Infinity, hi = -Infinity; r.spec.forEach(col => col.forEach(v => { lo = Math.min(lo,v); hi = Math.max(hi,v); }));
+  const c0 = hex(css("--spec-lo")), c1 = hex(css("--spec-hi"));
+  r.spec.forEach((col,k) => col.forEach((v,j) => { const u = (v-lo)/(hi-lo+1e-9);
+    c.fillStyle = `rgb(${c0.map((a,i)=>Math.round(a+(c1[i]-a)*u)).join(",")})`;
+    const d = j ? (f[j]-f[j-1])/2 : 0.25; c.fillRect(x(k*hop/fs), y2(f[j]+d), x((k*hop+win)/fs)-x(k*hop/fs), y2(f[j]-d)-y2(f[j]+d)); }));
+  paint(t2,h2,0.35); c.globalAlpha = 1;
+  c.strokeStyle = "#f0a500"; c.setLineDash([4,4]); c.lineWidth = 1.2; [3,12].forEach(hz => { c.beginPath(); c.moveTo(L,y2(hz)); c.lineTo(W-R,y2(hz)); c.stroke(); }); c.setLineDash([]);
+  r.peak.forEach((hz,k) => { c.beginPath(); c.arc(x((k*hop+win/2)/fs), y2(hz), 3.2, 0, 7); c.fillStyle="#fff"; c.fill(); c.strokeStyle="#000"; c.lineWidth=.8; c.stroke(); });
+  c.fillStyle = css("--muted"); c.textAlign = "right"; [0,5,10,15].forEach(v => c.fillText(v, L-6, y2(v)+4));
+  c.save(); c.translate(12, t2+h2/2); c.rotate(-Math.PI/2); c.textAlign="center"; c.fillText("Hz",0,0); c.restore();
+  c.textAlign = "center"; for (let tt = 0; tt <= dur; tt += 2) c.fillText(tt.toFixed(0)+(tt===0?" s":""), x(tt), H-8);
+  // 윈도우별 3~12Hz 파워 비율: 스펙트로그램 상단에 숫자. 0.6 이상이면 주황.
+  c.font = "bold 11px "+css("--mono");
+  r.tr.forEach((v,k) => { c.fillStyle = v >= 0.6 ? "#f0a500" : css("--muted"); c.fillText(v.toFixed(2), x((k*hop+win/2)/fs), t2+12); });
+  c.font = "11px "+css("--mono");
+}
+function hex(h){ h = h.replace("#",""); return [0,2,4].map(i => parseInt(h.substr(i,2),16)); }
+</script>
