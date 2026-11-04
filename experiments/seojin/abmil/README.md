@@ -17,8 +17,17 @@ bag 하나에 라벨 하나만 주고, 어느 2초 윈도우가 떨림 근거인
 | `viz.py` | hold-out 1명의 bag을 신호 + 스펙트로그램 + attention 배경으로 PNG |
 | `pads_abmil.py` | PADS → `data/pads_bags.npz`, 5-fold 피험자 CV, 과제별 attention 합 |
 | `export_pads_gui.py` | CV 결과를 뷰어용 `gui_pads/data.json`으로 |
-| `gui_pads/index.html` | PADS 뷰어. 피험자·과제 그룹 필터, 녹음별 attention, 윈도우별 3~12 Hz 파워 비율 |
+| `gui_pads/` | **PADS Tremor Attention 뷰어** (`index.html` + `data.json` 13 MB). 피험자·과제 그룹 필터, 녹음별 attention, 윈도우별 3~12 Hz 파워 비율 |
 | `data/pads_cv.npz` | 5-fold out-of-fold 예측 p와 attention A (커밋됨, 뷰어 재생성용) |
+
+## 뷰어 바로 열기
+
+```bash
+cd experiments/seojin/abmil/gui_pads && python3 -m http.server 8000
+```
+
+브라우저에서 http://localhost:8000 . 학습·torch 없이 열린다 (`data.json` 포함 커밋).
+파일을 더블클릭으로 열면 `data.json`을 못 읽으니 꼭 서버로 연다.
 
 ## 실행
 
@@ -34,8 +43,8 @@ PADS는 `data_sources/seojin/pads/raw/`에 원본이 있어야 한다 (`PADS_RAW
 
 ```bash
 python3 pads_abmil.py                               # bag 생성(수 분) + 5-fold CV(약 20분, 결과 캐시)
-python3 export_pads_gui.py                          # gui_pads/data.json (13 MB, 커밋 안 함)
-cd gui_pads && python3 -m http.server               # 브라우저에서 localhost:8000
+python3 export_pads_gui.py                          # gui_pads/data.json 재생성 (모델 바꿨을 때만)
+cd gui_pads && python3 -m http.server               # 브라우저에서 localhost:8000 → 바로 열림
 ```
 
 CPU 3코어 기준 자체 데이터 LOSO 약 1분, PADS 5-fold 약 20분.

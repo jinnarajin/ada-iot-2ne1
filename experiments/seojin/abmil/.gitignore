@@ -1,4 +1,3 @@
 data/*.npz
 !data/pads_cv.npz
 data/*.png
-gui_pads/data.json
