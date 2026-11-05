@@ -36,8 +36,11 @@ h1{font-size:18px;font-weight:600;margin:0 0 4px;text-wrap:balance}
 .lab.t{background:var(--tremor)} .lab.n{background:var(--non)}
 .p{font:12px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
 .p.wrong{color:var(--accent);font-weight:500}
-.bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent)}
+.p.unc{color:var(--muted);font-style:italic}
+.bar{height:5px;border-radius:3px;background:var(--line);overflow:visible;position:relative}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.bar i.unc{background:var(--muted)}
+.bar b{position:absolute;top:-3px;width:2px;height:11px;background:var(--fg);margin-left:-1px}
 .main{min-width:0;display:flex;flex-direction:column;gap:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
 .head{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;font:12px var(--mono);color:var(--muted)}
@@ -56,12 +59,12 @@ canvas.big{width:100%;height:auto;display:block;max-width:100%}
 </style>
 
 <h1>PADS Tremor Attention</h1>
-<p class="sub">PADS 실제 환자 데이터. 피험자 1명(11개 과제 × 양손목 = 녹음 22개)이 bag이고 2초 윈도우가 instance입니다. ABMIL은 "이 사람이 떨림 환자인가" 라벨만 보고 학습했고, 붉은 농도는 모델이 어느 과제·어느 구간을 근거로 삼았는지입니다. 5-fold 피험자 분할의 out-of-fold 예측입니다.</p>
+<p class="sub">PADS 실제 환자 데이터. 피험자 1명(11개 과제 × 양손목 = 녹음 22개)이 bag이고 2초 윈도우가 instance입니다. ABMIL은 "이 사람이 떨림 환자인가" 라벨만 보고 학습했고, 붉은 농도는 모델이 어느 과제·어느 구간을 근거로 삼았는지입니다. 5-fold nested CV의 out-of-fold 예측이며, 임계값(막대의 검은 눈금)은 각 fold의 학습 데이터 안에서 골랐고 그 ±0.05는 보류(uncertain)로 둡니다.</p>
 
 <div class="app">
   <div class="side">
     <div class="ctl">
-      <select id="filter" aria-label="필터"><option value="all">전체</option><option value="t">떨림만</option><option value="n">건강군만</option><option value="wrong">오분류만</option></select>
+      <select id="filter" aria-label="필터"><option value="all">전체</option><option value="t">떨림만</option><option value="n">건강군만</option><option value="wrong">오분류만</option><option value="unc">보류(uncertain)만</option></select>
       <select id="sort" aria-label="정렬"><option value="id">ID 순</option><option value="p">확률 높은 순</option><option value="att">attention 집중 순</option></select>
       <select id="tasks" aria-label="과제 그룹"><option value="all">모든 과제</option><option value="kin">운동성만</option><option value="rest">안정만</option><option value="post">자세만</option></select>
     </div>
@@ -97,18 +100,25 @@ fetch("data.json").then(r => r.json()).then(d => {
   renderList(true);
 });
 
+// 판정: 피험자 fold의 임계값 thr 기준. |p - thr| <= band 면 보류(uncertain).
+const verdict = s => Math.abs(s.p - s.thr) <= (D.band ?? 0.05) ? "unc" : (s.p > s.thr ? "t" : "n");
+const isWrong = s => { const v = verdict(s); return v !== "unc" && (v === "t") !== (s.y === 1); };
+
 function renderList(reset){
   const f = $("filter").value, so = $("sort").value;
   order = D.subjects.map((s,i)=>i).filter(i => { const s = D.subjects[i];
-    return f==="all" || (f==="t"&&s.y===1) || (f==="n"&&s.y===0) || (f==="wrong"&&(s.p>0.5)!==(s.y===1)); });
+    return f==="all" || (f==="t"&&s.y===1) || (f==="n"&&s.y===0) || (f==="wrong"&&isWrong(s)) || (f==="unc"&&verdict(s)==="unc"); });
   if (so==="p") order.sort((a,b)=>D.subjects[b].p-D.subjects[a].p);
   if (so==="att") order.sort((a,b)=>D.subjects[b].attMax-D.subjects[a].attMax);
-  const all = D.subjects, tp = all.filter(s=>s.y&&s.p>.5).length, tn = all.filter(s=>!s.y&&s.p<=.5).length, n1 = all.filter(s=>s.y).length, n0 = all.length-n1;
-  $("stat").textContent = `${all.length}명 · tremor ${tp}/${n1} · healthy ${tn}/${n0} · bal.acc ${(0.5*(tp/n1+tn/n0)).toFixed(3)} · 표시 ${order.length}명`;
+  const all = D.subjects, sure = all.filter(s=>verdict(s)!=="unc"), unc = all.length - sure.length;
+  const tp = sure.filter(s=>s.y&&verdict(s)==="t").length, tn = sure.filter(s=>!s.y&&verdict(s)==="n").length;
+  const n1 = sure.filter(s=>s.y).length, n0 = sure.length-n1;
+  $("stat").textContent = `${all.length}명 · 보류 ${unc}명 제외 → tremor ${tp}/${n1} · healthy ${tn}/${n0} · sens ${(tp/n1).toFixed(2)} · spec ${(tn/n0).toFixed(2)} · bal.acc ${(0.5*(tp/n1+tn/n0)).toFixed(3)} · 표시 ${order.length}명`;
   if (reset && order.length && !order.includes(cur)) cur = order[0];
-  $("list").innerHTML = order.map(i => { const s = D.subjects[i]; return `<button aria-pressed="${i===cur}" data-i="${i}">
+  $("list").innerHTML = order.map(i => { const s = D.subjects[i], v = verdict(s); return `<button aria-pressed="${i===cur}" data-i="${i}">
     <span class="id">${s.id}</span><span class="lab ${s.y?'t':'n'}">${s.y?'tremor':'healthy'}</span>
-    <span class="bar"><i style="width:${s.p*100}%"></i></span><span class="p ${(s.p>.5)!==(s.y===1)?'wrong':''}">${s.p.toFixed(2)}</span></button>`; }).join("");
+    <span class="bar"><i class="${v==='unc'?'unc':''}" style="width:${s.p*100}%"></i><b style="left:${s.thr*100}%" title="thr ${s.thr}"></b></span>
+    <span class="p ${v==='unc'?'unc':(isWrong(s)?'wrong':'')}">${s.p.toFixed(2)}</span></button>`; }).join("");
   $("list").onclick = e => { const b = e.target.closest("button"); if (b) { cur = +b.dataset.i; curRec = 0; renderList(false); } };
   if (order.length) renderSubject();
 }
@@ -118,7 +128,7 @@ function shade(a, K){ return Math.min(1, Math.max(0, (a*K - 1) / 5)); }   // 1/K
 function renderSubject(){
   const s = D.subjects[cur], K = s.recs.reduce((a,r)=>a+r.att.length,0);
   const best = s.recs.reduce((b,r,i)=>Math.max(...r.att)>Math.max(...s.recs[b].att)?i:b,0);
-  $("head").innerHTML = `<span>subject <b>${s.id}</b></span><span>진단 <b>${s.cond}</b></span><span>label <b>${s.y?'TREMOR':'HEALTHY'}</b></span><span>p(tremor) <b>${s.p.toFixed(3)}</b></span><span>attention 최대 녹음 <b>${s.recs[best].name}</b></span>`;
+  $("head").innerHTML = `<span>subject <b>${s.id}</b></span><span>진단 <b>${s.cond}</b></span><span>label <b>${s.y?'TREMOR':'HEALTHY'}</b></span><span>p(tremor) <b>${s.p.toFixed(3)}</b> / thr ${s.thr.toFixed(2)}</span><span>판정 <b>${{t:'TREMOR',n:'NON-TREMOR',unc:'UNCERTAIN (보류)'}[verdict(s)]}</b></span><span>attention 최대 녹음 <b>${s.recs[best].name}</b></span>`;
   const byName = Object.fromEntries(s.recs.map((r,i)=>[r.name,i]));
   const shown = GROUPS[$("tasks").value];
   if (curRec < 0 || !shown.includes(s.recs[curRec].name.split("/")[0])) curRec = byName[`${shown[0]}/L`] ?? 0;

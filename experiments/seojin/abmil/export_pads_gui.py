@@ -12,16 +12,17 @@ import abmil; abmil.EPOCHS = 25
 
 torch.manual_seed(0)
 d = np.load(BAGS); X, y, subj, inst_task = d["X"], d["y"], d["subject"], d["inst_task"]
-CV = BAGS.with_name("pads_cv.npz")
-if CV.exists(): c = np.load(CV); p, A = c["p"], c["A"]
-else: p, A = cv(X, y); np.savez_compressed(CV, p=p, A=A)
+from pads_abmil import cv_nested
+CV = BAGS.with_name("pads_cv_nested.npz")
+if CV.exists(): c = np.load(CV); p, A, thr = c["p"], c["A"], c["thr"]
+else: p, A, thr = cv_nested(X, y); np.savez_compressed(CV, p=p, A=A, thr=thr)
 recs = list(dict.fromkeys(inst_task)); span = {r: np.where(inst_task == r)[0] for r in recs}   # 녹음별 instance 인덱스(길이 다를 수 있음)
 cond = {}
 for s in subj:
     pt = json.loads((PADS / f"patients/patient_{s}.json").read_text()); cond[s] = pt["condition"] + ("" if pt["disease_comment"] == "-" else " · " + pt["disease_comment"])
-f = None; out = {"fs": FS, "win": WIN, "hop": HOP, "recs": recs, "subjects": []}
+f = None; out = {"fs": FS, "win": WIN, "hop": HOP, "band": 0.05, "recs": recs, "subjects": []}
 for i in range(len(y)):
-    bag = {"id": str(subj[i]), "cond": cond[subj[i]], "y": int(y[i]), "p": round(float(p[i]), 3), "recs": []}
+    bag = {"id": str(subj[i]), "cond": cond[subj[i]], "y": int(y[i]), "p": round(float(p[i]), 3), "thr": round(float(thr[i]), 2), "recs": []}
     for r, name in enumerate(recs):
         ix = span[name]; w = X[i, ix]                       # (n_win, 100, 6)
         sig = np.concatenate([w[0]] + [wk[HOP:] for wk in w[1:]])[:, :3]

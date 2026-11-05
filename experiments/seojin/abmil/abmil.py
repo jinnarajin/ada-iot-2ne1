@@ -44,15 +44,17 @@ class ABMIL(nn.Module):
         return self.cls(z).squeeze(-1), a.squeeze(-1)   # 로짓 (B,), attention (B, K)
 
 
-def fit(Xtr, ytr):
+def fit(Xtr, ytr, balance=False):
+    """balance=True: 소수 클래스를 가중해 근거 없을 때 출력이 0.5로 오게 한다 (클래스 불균형 보정)."""
     m = ABMIL(Xtr.shape[-1])
     opt = torch.optim.Adam(m.parameters(), LR)
     X, y = torch.tensor(Xtr), torch.tensor(ytr, dtype=torch.float32)
+    pw = torch.tensor((ytr == 0).sum() / max((ytr == 1).sum(), 1), dtype=torch.float32) if balance else None
     # 라벨은 bag 단위 하나뿐 -> 손실도 bag 로짓에만 걸린다. instance 라벨 없이 학습되는 게 MIL의 핵심.
     for _ in range(EPOCHS):
         for i in torch.randperm(len(X)).split(16):
             opt.zero_grad()
-            loss = nn.functional.binary_cross_entropy_with_logits(m(X[i])[0], y[i])
+            loss = nn.functional.binary_cross_entropy_with_logits(m(X[i])[0], y[i], pos_weight=pw)
             loss.backward(); opt.step()
     return m.eval()
 
